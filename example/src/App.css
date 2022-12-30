@@ -1,0 +1,77 @@
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.app {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.container {
+  padding: 0;
+  margin: 0;
+  margin-bottom: 10px;
+  border-radius: 24px;
+  list-style: none;
+  overflow: hidden;
+  width: 430px;
+  height: 430px;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: repeat(4, 100%);
+}
+
+.container > li:nth-child(1) {
+  background-color: #ef476f;
+}
+
+.container > li:nth-child(2) {
+  background-color: #ffd166;
+}
+
+.container > li:nth-child(3) {
+  background-color: #06d6a0;
+}
+
+.container > li:nth-child(4) {
+  background-color: #9b5de5;
+}
+
+.button-74 {
+  background-color: transparent;
+  border: 0;
+  border-radius: 30px;
+  box-shadow: none;
+  color: #422800;
+  cursor: pointer;
+  display: inline-block;
+  font-weight: 600;
+  font-size: 18px;
+  padding: 0 18px;
+  line-height: 50px;
+  text-align: center;
+  text-decoration: none;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+.button-74:hover {
+  background-color: #fff;
+}
+
+.button-74:focus-within {
+  outline: 1;
+}
+
+@media (min-width: 768px) {
+  .button-74 {
+    min-width: 120px;
+    padding: 0 25px;
+  }
+}

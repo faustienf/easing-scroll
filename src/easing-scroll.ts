@@ -39,19 +39,21 @@ export const easingScroll = ({
     const startTimestamp = performance.now();
     let ramID: number;
 
+    const getProgress = (): Pct => {
+      const elapsed = performance.now() - startTimestamp;
+      return elapsed / duration;
+    };
+
     const abortHandler = () => {
       cancelAnimationFrame(ramID);
-
-      const elapsed = performance.now() - startTimestamp;
-      const progress = elapsed / duration;
+      const progress = getProgress();
       resolve(progress);
     };
 
     signal?.addEventListener("abort", abortHandler);
 
-    const tick = (timestamp: DOMHighResTimeStamp) => {
-      const elapsed = timestamp - startTimestamp;
-      const progress = elapsed / duration;
+    const tick = () => {
+      const progress = getProgress();
       const tickTop =
         top === undefined
           ? undefined
