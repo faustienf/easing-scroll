@@ -78,10 +78,10 @@ function App() {
           <li></li>
           <li></li>
         </ul>
-        <button className="button-74" role="button" onClick={handleDown}>
+        <button className="button" onClick={handleDown}>
           Scroll Down
         </button>
-        <button className="button-74" role="button" onClick={handleUp}>
+        <button className="button" onClick={handleUp}>
           Scroll Up
         </button>
       </div>
