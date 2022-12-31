@@ -4,7 +4,7 @@ import {
   SandpackCodeEditor,
   SandpackLayout,
 } from "@codesandbox/sandpack-react";
-// @ts-expect-error
+// @ts-ignore
 import { amethyst } from "@codesandbox/sandpack-themes";
 
 import { easingScroll } from "easing-scroll";
@@ -55,7 +55,7 @@ function App() {
       top,
       duration: 400,
       signal: controller.signal,
-      easing: (x) => 1 - Math.pow(1 - x, 3),
+      easing: (x: number): number => 1 - Math.pow(1 - x, 3),
     }).then((progress) => {
       if (progress < 1) {
         console.log("Canceled", progress);
