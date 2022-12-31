@@ -1,12 +1,8 @@
-<p align="center">
-  <img src="https://raw.githubusercontent.com/faustienf/easing-scroll/main/assets/header.png" width="80%">
-</p>
-
 # easing-scroll
 
 [![npm-version](https://img.shields.io/npm/v/easing-scroll.svg)](https://npmjs.org/package/easing-scroll)
 
-♿️ Smooth scrolling.
+♿️ Smooth scrolling. [Demo](https://easing-scroll.vercel.app).
 
 ## Install
 
@@ -83,11 +79,11 @@ if (progress !== 1) {
 }
 ```
 
-`progress` is a number from 0 to 1.
+`progress` is a number from _0_ to _1_.
 
-`1` - Scrolling is completed 100%.
+`1` - Scrolling is completed _100%_.
 
-`<1` - Scrolling has been aborted and completed X%.
+`<1` - Scrolling has been aborted and completed _x%_.
 
 ```ts
 const progress = await easingScroll(target, {

@@ -1,6 +1,11 @@
 type Px = number;
 type Ms = number;
-type Pct = number; // 0 - 1 (0% - 100%)
+/**
+ * Percent is number 0 - 1
+ *
+ * 0 = 0%, 1 = 100%
+ */
+type Pct = number;
 
 type Options = {
   top: Px;
