@@ -7,7 +7,7 @@ import {
 // @ts-ignore
 import { amethyst } from "@codesandbox/sandpack-themes";
 
-import { easingScroll } from "easing-scroll";
+import { easingScroll } from "../../src";
 import "./App.css";
 
 const code = `
