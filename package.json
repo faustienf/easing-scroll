@@ -22,7 +22,8 @@
   "scripts": {
     "check-types": "tsc",
     "clean": "rm -r dist/*",
-    "build": "npm run clean && rollup -c"
+    "build": "npm run clean && rollup -c",
+    "release": "npm run check-types && npm publish"
   },
   "repository": {
     "type": "git",
