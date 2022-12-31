@@ -14,11 +14,12 @@ const code = `
 import { easingScroll } from "easing-scroll";
 
 const controller = new AbortController();
-// cancel scroll
+// Abort scrolling
 // controller.abort(); ❌
 
-const progress = await easingScroll({
-  target: document.querySelector('.container'),
+const target = document.querySelector('.container');
+
+const progress = await easingScroll(target, {
   left: 0, // px
   top: 300, // px
   duration: 400, // ms
@@ -28,7 +29,7 @@ const progress = await easingScroll({
 });
 
 if (progress === 1) {
-  console.log("Finished");
+  console.log("Completed");
 } else {
   console.log("Canceled");
 }
@@ -50,8 +51,7 @@ function App() {
     const target = ref.current!;
     const controller = new AbortController();
 
-    easingScroll({
-      target,
+    easingScroll(target, {
       top,
       duration: 400,
       signal: controller.signal,

@@ -3,27 +3,22 @@ type Ms = number;
 type Pct = number; // 0 - 1 (0% - 100%)
 
 type Options = {
-  target: Element;
-  top?: Px;
-  left?: Px;
-  duration?: Ms;
-  signal?: AbortSignal;
+  top: Px;
+  left: Px;
+  duration: Ms;
+  signal: AbortSignal;
   /**
    * @see Easing functions https://easings.net
    */
-  easing?: (t: Pct) => Pct;
+  easing: (t: Pct) => Pct;
 };
 
 const linear = (t: number): number => t;
 
-export const easingScroll = ({
-  target,
-  top,
-  left,
-  signal,
-  duration = 0,
-  easing = linear,
-}: Options): Promise<Pct> => {
+export const easingScroll = <E extends Element>(
+  target: E,
+  { top, left, signal, duration = 0, easing = linear }: Partial<Options>
+): Promise<Pct> => {
   if (signal?.aborted) {
     return Promise.resolve(0);
   }
