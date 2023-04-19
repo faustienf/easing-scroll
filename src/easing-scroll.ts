@@ -8,28 +8,36 @@ type Ms = number;
 type Pct = number;
 
 type Options = {
-  top: Px;
-  left: Px;
-  duration: Ms;
-  signal: AbortSignal;
+  top?: Px;
+  left?: Px;
+  duration?: Ms;
+  signal?: AbortSignal;
   /**
    * @see Easing functions https://easings.net
    */
-  easing: (t: Pct) => Pct;
+  easing?: (t: Pct) => Pct;
 };
 
 const linear = (t: number): number => t;
 
+const scrollTo = <E extends Element>(
+  target: E,
+  { top, left }: Pick<Options, "top" | "left">
+) => {
+  target.scrollTop = top ?? target.scrollTop;
+  target.scrollLeft = left ?? target.scrollLeft;
+};
+
 export const easingScroll = <E extends Element>(
   target: E,
-  { top, left, signal, duration = 0, easing = linear }: Partial<Options>
+  { top, left, signal, duration = 0, easing = linear }: Options
 ): Promise<Pct> => {
   if (signal?.aborted) {
     return Promise.resolve(0);
   }
 
   if (!duration) {
-    target.scrollTo({ top, left });
+    scrollTo(target, { top, left });
     return Promise.resolve(1);
   }
 
@@ -64,10 +72,10 @@ export const easingScroll = <E extends Element>(
           : startLeft + (left - startLeft) * easing(progress);
 
       if (progress < 1) {
-        target.scrollTo({ top: tickTop, left: tickLeft });
+        scrollTo(target, { top: tickTop, left: tickLeft });
         ramID = requestAnimationFrame(tick);
       } else {
-        target.scrollTo({ top, left });
+        scrollTo(target, { top, left });
         signal?.removeEventListener("abort", abortHandler);
         resolve(1);
       }
