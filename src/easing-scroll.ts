@@ -20,15 +20,16 @@ type Options = {
 
 const linear = (t: number): number => t;
 
-const scrollTo = <E extends Element>(
+const scrollTo = <E extends HTMLElement>(
   target: E,
-  { top, left }: Pick<Options, "top" | "left">
+  top: Options["top"],
+  left: Options["left"]
 ) => {
   target.scrollTop = top ?? target.scrollTop;
   target.scrollLeft = left ?? target.scrollLeft;
 };
 
-export const easingScroll = <E extends Element>(
+export const easingScroll = <E extends HTMLElement>(
   target: E,
   { top, left, signal, duration = 0, easing = linear }: Options
 ): Promise<Pct> => {
@@ -37,13 +38,18 @@ export const easingScroll = <E extends Element>(
   }
 
   if (!duration) {
-    scrollTo(target, { top, left });
+    scrollTo(target, top, left);
     return Promise.resolve(1);
   }
 
   return new Promise<Pct>((resolve) => {
     const startTop = target.scrollTop;
     const startLeft = target.scrollLeft;
+
+    scrollTo(target, top, left);
+    top = target.scrollTop;
+    left = target.scrollLeft;
+
     const startTimestamp = performance.now();
     let ramID: number;
 
@@ -72,10 +78,10 @@ export const easingScroll = <E extends Element>(
           : startLeft + (left - startLeft) * easing(progress);
 
       if (progress < 1) {
-        scrollTo(target, { top: tickTop, left: tickLeft });
+        scrollTo(target, tickTop, tickLeft);
         ramID = requestAnimationFrame(tick);
       } else {
-        scrollTo(target, { top, left });
+        scrollTo(target, top, left);
         signal?.removeEventListener("abort", abortHandler);
         resolve(1);
       }
