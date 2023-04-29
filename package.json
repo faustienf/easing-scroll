@@ -25,7 +25,7 @@
     "build": "npm run clean && rollup -c",
     "release:patch": "npm version patch",
     "preversion": "npm run check-types && npm run build",
-    "postversion": "git add -A dist && git push && git push --tags && npm publish"
+    "postversion": "git add . && git push && git push --tags && npm publish"
   },
   "repository": {
     "type": "git",
