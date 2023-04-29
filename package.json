@@ -23,10 +23,9 @@
     "check-types": "tsc",
     "clean": "rm -r dist/*",
     "build": "npm run clean && rollup -c",
-    "release:patch": "npm vertion patch && npm publish",
-    "preversion": "npm run check-types",
-    "version": "npm run build && git add -A dist",
-    "postversion": "git push && git push --tags"
+    "release:patch": "npm version patch",
+    "preversion": "npm run check-types && npm run build",
+    "postversion": "git add -A dist && git push && git push --tags && npm publish"
   },
   "repository": {
     "type": "git",
