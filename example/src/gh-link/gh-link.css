@@ -45,3 +45,17 @@
 .gh-link::after {
   content: "GitHub";
 }
+
+@media (max-width: 480px) {
+  .gh-link {
+    padding: 6px 10px;
+    font-size: 12px;
+    top: 10px;
+    right: 10px;
+  }
+
+  .gh-link::before {
+    width: 16px;
+    height: 16px;
+  }
+}

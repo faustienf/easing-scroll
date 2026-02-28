@@ -5,6 +5,13 @@
   text-align: center;
 }
 
+@media (max-width: 768px) {
+  #root {
+    padding: 1.25rem;
+    padding-top: 3.5rem;
+  }
+}
+
 .app {
   display: flex;
   flex-direction: column;
@@ -35,6 +42,15 @@
   grid-template-columns: 1fr auto;
   align-items: flex-start;
   gap: 28px;
+  width: 100%;
+  max-width: 100%;
+}
+
+@media (max-width: 960px) {
+  .demo-area {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
 }
 
 .scroll-panel {
@@ -52,6 +68,8 @@
   overflow: hidden;
   width: var(--tile-size);
   height: var(--tile-size);
+  max-width: calc(100vw - 2.5rem);
+  max-height: calc(100vw - 2.5rem);
   display: grid;
   grid-template-columns: 1fr;
   grid-template-rows: repeat(4, 100%);
@@ -69,6 +87,12 @@
   align-items: center;
   justify-content: center;
   font-size: 3.5rem;
+}
+
+@media (max-width: 520px) {
+  .container > li {
+    font-size: 2.5rem;
+  }
 }
 
 .container > li:nth-child(1) {
@@ -162,6 +186,15 @@
   box-shadow:
     0 8px 32px rgba(99, 102, 241, 0.08),
     0 2px 8px rgba(0, 0, 0, 0.04);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 960px) {
+  .code-card {
+    max-width: min(480px, calc(100vw - 2.5rem));
+  }
 }
 
 .code-card .sp-layout {

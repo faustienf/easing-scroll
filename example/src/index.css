@@ -34,6 +34,7 @@ body {
   min-width: 320px;
   min-height: 100vh;
   position: relative;
+  overflow-x: hidden;
 }
 
 body::before {

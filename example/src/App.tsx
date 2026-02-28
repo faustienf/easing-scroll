@@ -37,21 +37,42 @@ if (progress === 1) {
 }
 `.trim();
 
-const SCROLL_SIZE = 480;
-const STYLES = { "--tile-size": `${SCROLL_SIZE}px` } as React.CSSProperties;
+const BASE_TILE_SIZE = 480;
+const STYLES = {
+  "--tile-size": `${BASE_TILE_SIZE}px`,
+} as React.CSSProperties;
+
+function useTileSize(ref: React.RefObject<HTMLElement | null>): number {
+  const [size, setSize] = useState(BASE_TILE_SIZE);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const update = () => setSize(el.clientHeight);
+    update();
+
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [ref]);
+
+  return size;
+}
 
 function App() {
   const [top, setTop] = useState(0);
   const ref = useRef<HTMLUListElement>(null);
+  const tileSize = useTileSize(ref);
 
   const handleDown = useCallback(
-    () => setTop((state) => Math.min(SCROLL_SIZE * 3, state + SCROLL_SIZE)),
-    [],
+    () => setTop((state) => Math.min(tileSize * 3, state + tileSize)),
+    [tileSize],
   );
 
   const handleUp = useCallback(
-    () => setTop((state) => Math.max(0, state - SCROLL_SIZE)),
-    [],
+    () => setTop((state) => Math.max(0, state - tileSize)),
+    [tileSize],
   );
 
   useEffect(() => {
@@ -108,7 +129,7 @@ function App() {
 
         <div className="code-card">
           <SandpackProvider
-            style={{ height: SCROLL_SIZE }}
+            style={{ height: tileSize }}
             theme={aquaBlue}
             template="react"
             files={{
