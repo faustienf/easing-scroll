@@ -1,4 +1,4 @@
-import path from "path";
+import { fileURLToPath, URL } from "node:url";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 
@@ -7,7 +7,9 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      "easing-scroll": path.resolve(__dirname, "../src/easing-scroll.ts"),
+      "easing-scroll": fileURLToPath(
+        new URL("../src/easing-scroll.ts", import.meta.url),
+      ),
     },
   },
 });
