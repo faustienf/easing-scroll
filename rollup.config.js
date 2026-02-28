@@ -38,4 +38,4 @@ const entry = (input) => {
   ];
 };
 
-export default [...entry("index.ts"), ...entry("easing-scroll.ts")];
+export default entry("easing-scroll.ts");

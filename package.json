@@ -3,17 +3,12 @@
   "version": "1.0.3",
   "description": "♿️ Smooth scrolling",
   "type": "module",
-  "source": "src/index.ts",
-  "main": "dist/index.js",
-  "module": "dist/index.mjs",
-  "types": "dist/index.d.ts",
+  "source": "src/easing-scroll.ts",
+  "main": "dist/easing-scroll.js",
+  "module": "dist/easing-scroll.mjs",
+  "types": "dist/easing-scroll.d.ts",
   "exports": {
     ".": {
-      "require": "./dist/index.js",
-      "import": "./dist/index.mjs",
-      "default": "./dist/index.mjs"
-    },
-    "./easing-scroll": {
       "require": "./dist/easing-scroll.js",
       "import": "./dist/easing-scroll.mjs",
       "default": "./dist/easing-scroll.mjs"
