@@ -42,12 +42,12 @@ function App() {
   const ref = useRef<HTMLUListElement>(null);
 
   const handleDown = useCallback(
-    () => setTop((state) => Math.min(430 * 3, state + 430)),
+    () => setTop((state) => Math.min(450 * 3, state + 450)),
     [],
   );
 
   const handleUp = useCallback(
-    () => setTop((state) => Math.max(0, state - 430)),
+    () => setTop((state) => Math.max(0, state - 450)),
     [],
   );
 
@@ -80,33 +80,44 @@ function App() {
         target="_blank"
       />
 
-      <div>
-        <ul ref={ref} className="container">
-          <li></li>
-          <li></li>
-          <li></li>
-          <li></li>
-        </ul>
-        <button className="button" onClick={handleDown}>
-          Scroll Down
-        </button>
-        <button className="button" onClick={handleUp}>
-          Scroll Up
-        </button>
-      </div>
+      <h1 className="app-title">easing-scroll</h1>
+      <p className="app-subtitle">
+        Smooth scrolling with custom easing functions
+      </p>
 
-      <SandpackProvider
-        style={{ height: 430 }}
-        theme={amethyst}
-        template="react"
-        files={{
-          "/App.js": code,
-        }}
-      >
-        <SandpackLayout style={{ height: "100%" }}>
-          <SandpackCodeEditor style={{ height: "100%" }} readOnly />
-        </SandpackLayout>
-      </SandpackProvider>
+      <div className="demo-area">
+        <div className="scroll-panel">
+          <ul ref={ref} className="container">
+            <li>🍑</li>
+            <li>🍋</li>
+            <li>🌿</li>
+            <li>🦄</li>
+          </ul>
+          <div className="button-group">
+            <button className="button" onClick={handleUp}>
+              ↑ Up
+            </button>
+            <button className="button" onClick={handleDown}>
+              ↓ Down
+            </button>
+          </div>
+        </div>
+
+        <div className="code-card">
+          <SandpackProvider
+            style={{ height: 450 }}
+            theme={amethyst}
+            template="react"
+            files={{
+              "/App.js": code,
+            }}
+          >
+            <SandpackLayout style={{ height: "100%", padding: 8 }}>
+              <SandpackCodeEditor style={{ height: "100%" }} readOnly />
+            </SandpackLayout>
+          </SandpackProvider>
+        </div>
+      </div>
     </div>
   );
 }

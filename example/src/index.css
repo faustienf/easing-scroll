@@ -1,14 +1,24 @@
 :root {
-  font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
+  font-family:
+    "Inter",
+    "SF Pro Display",
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
   font-size: 16px;
-  line-height: 24px;
+  line-height: 1.6;
   font-weight: 400;
+  color: #334155;
 
-  background-image: radial-gradient(
-    circle farthest-corner at 10% 20%,
-    rgba(255, 229, 168, 1) 0%,
-    rgba(251, 174, 222, 1) 100.7%
+  background: linear-gradient(
+    135deg,
+    #e0e7ff 0%,
+    #fce7f3 30%,
+    #dbeafe 60%,
+    #f0fdf4 100%
   );
+  background-attachment: fixed;
+  min-height: 100vh;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -23,4 +33,42 @@ body {
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  position: relative;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background:
+    radial-gradient(
+      circle at 20% 30%,
+      rgba(167, 139, 250, 0.15) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 80% 20%,
+      rgba(96, 165, 250, 0.12) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 50% 80%,
+      rgba(244, 114, 182, 0.1) 0%,
+      transparent 50%
+    );
+  pointer-events: none;
+  z-index: -1;
+  animation: drift 20s ease-in-out infinite alternate;
+}
+
+@keyframes drift {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  100% {
+    transform: translate(-2%, -2%) rotate(3deg);
+  }
 }

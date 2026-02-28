@@ -1,15 +1,47 @@
 .gh-link {
   position: fixed;
-  top: 8px;
-  left: 8px;
+  top: 16px;
+  right: 16px;
+  left: auto;
   display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  color: #475569;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  z-index: 100;
+}
+
+.gh-link:hover {
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.1);
+  color: #6366f1;
 }
 
 .gh-link::before {
   content: "";
-  margin-right: 8px;
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   background-image: url("./icon.svg");
   background-size: contain;
+  background-repeat: no-repeat;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.gh-link:hover::before {
+  opacity: 1;
+}
+
+.gh-link::after {
+  content: "GitHub";
 }

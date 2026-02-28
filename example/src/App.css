@@ -1,72 +1,183 @@
 #root {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 2.5rem;
   text-align: center;
 }
 
 .app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+}
+
+.app-title {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, #6366f1, #a855f7, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0;
+}
+
+.app-subtitle {
+  font-size: 1rem;
+  color: #94a3b8;
+  font-weight: 400;
+  margin: -16px 0 0;
+}
+
+.demo-area {
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: flex-start;
-  gap: 20px;
+  gap: 28px;
+}
+
+.scroll-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
 }
 
 .container {
   padding: 0;
   margin: 0;
-  margin-bottom: 10px;
-  border-radius: 24px;
+  border-radius: 20px;
   list-style: none;
   overflow: hidden;
-  width: 430px;
-  height: 430px;
+  width: 450px;
+  height: 450px;
   display: grid;
   grid-template-columns: 1fr;
   grid-template-rows: repeat(4, 100%);
-  box-shadow: rgba(50, 50, 93, 0.25) 0px 30px 60px -12px,
-    rgba(0, 0, 0, 0.3) 0px 18px 36px -18px;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow:
+    0 8px 32px rgba(99, 102, 241, 0.08),
+    0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.container > li {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3.5rem;
 }
 
 .container > li:nth-child(1) {
-  background-color: #ef476f;
+  background: linear-gradient(
+    135deg,
+    rgba(248, 113, 113, 0.35),
+    rgba(251, 146, 60, 0.25)
+  );
 }
 
 .container > li:nth-child(2) {
-  background-color: #ffd166;
+  background: linear-gradient(
+    135deg,
+    rgba(251, 191, 36, 0.3),
+    rgba(163, 230, 53, 0.25)
+  );
 }
 
 .container > li:nth-child(3) {
-  background-color: #06d6a0;
+  background: linear-gradient(
+    135deg,
+    rgba(52, 211, 153, 0.3),
+    rgba(96, 165, 250, 0.25)
+  );
 }
 
 .container > li:nth-child(4) {
-  background-color: #9b5de5;
+  background: linear-gradient(
+    135deg,
+    rgba(167, 139, 250, 0.35),
+    rgba(236, 72, 153, 0.25)
+  );
+}
+
+.button-group {
+  display: flex;
+  gap: 8px;
 }
 
 .button {
-  background-color: transparent;
-  border: 0;
-  border-radius: 30px;
-  box-shadow: none;
-  color: #422800;
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 12px;
+  box-shadow:
+    0 2px 8px rgba(99, 102, 241, 0.06),
+    0 1px 2px rgba(0, 0, 0, 0.04);
+  color: #475569;
   cursor: pointer;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-weight: 600;
-  font-size: 18px;
-  padding: 0 18px;
-  line-height: 50px;
+  font-size: 14px;
+  padding: 10px 20px;
   text-align: center;
   text-decoration: none;
   user-select: none;
   -webkit-user-select: none;
   touch-action: manipulation;
+  transition: all 0.2s ease;
 }
 
 .button:hover {
-  background-color: #fff;
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow:
+    0 4px 16px rgba(99, 102, 241, 0.1),
+    0 2px 4px rgba(0, 0, 0, 0.06);
+  transform: translateY(-1px);
+  color: #6366f1;
 }
 
-.button:focus-within {
-  outline: 1;
+.button:active {
+  transform: translateY(0);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.button:focus-visible {
+  outline: 2px solid #a5b4fc;
+  outline-offset: 2px;
+}
+
+.code-card {
+  border-radius: 20px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow:
+    0 8px 32px rgba(99, 102, 241, 0.08),
+    0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.code-card .sp-layout {
+  border: none !important;
+  border-radius: 20px !important;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6366f1;
+  background: rgba(99, 102, 241, 0.08);
+  padding: 4px 12px;
+  border-radius: 100px;
+  letter-spacing: 0.02em;
 }
