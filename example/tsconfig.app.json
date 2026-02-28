@@ -19,7 +19,11 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+    "baseUrl": ".",
+    "paths": {
+      "easing-scroll": ["../src/easing-scroll.ts"]
+    }
   },
   "include": ["src"]
 }

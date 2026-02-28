@@ -7,7 +7,7 @@ import {
 // @ts-ignore
 import { amethyst } from "@codesandbox/sandpack-themes";
 
-import { easingScroll } from "../../src";
+import { easingScroll } from "easing-scroll";
 import { GhLink } from "./gh-link";
 
 import "./App.css";
