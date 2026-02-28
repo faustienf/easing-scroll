@@ -108,19 +108,20 @@ export const easingScroll = <E extends Element>(
     target.scrollTop = startTop;
     target.scrollLeft = startLeft;
 
-    const startTimestamp = performance.now();
+    let startTimestamp: Ms | undefined;
     let ramID: number;
 
     /** Calculate raw animation progress (may exceed 1 between frames) */
-    const getProgress = (): Pct => {
-      const elapsed = performance.now() - startTimestamp;
+    const getProgress = (timestamp: Ms): Pct => {
+      if (startTimestamp === undefined) return 0;
+      const elapsed = timestamp - startTimestamp;
       return elapsed / duration;
     };
 
     /** Handle abort: cancel pending frame and resolve with clamped progress */
     const abortHandler = () => {
       cancelAnimationFrame(ramID);
-      const progress = Math.min(getProgress(), 1);
+      const progress = Math.max(0, Math.min(getProgress(performance.now()), 1));
       resolve(progress);
     };
 
@@ -129,8 +130,9 @@ export const easingScroll = <E extends Element>(
     signal?.addEventListener("abort", abortHandler, { once: true });
 
     /** Animation frame callback — interpolates scroll position via easing */
-    const tick = () => {
-      const progress = getProgress();
+    const tick = (timestamp: Ms) => {
+      if (startTimestamp === undefined) startTimestamp = timestamp;
+      const progress = getProgress(timestamp);
       const tickTop =
         top === undefined
           ? undefined
