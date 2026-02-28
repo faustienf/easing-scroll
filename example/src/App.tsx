@@ -5,7 +5,7 @@ import {
   SandpackLayout,
 } from "@codesandbox/sandpack-react";
 // @ts-ignore
-import { amethyst } from "@codesandbox/sandpack-themes";
+import { amethyst, aquaBlue } from "@codesandbox/sandpack-themes";
 
 import { easingScroll } from "easing-scroll";
 import { GhLink } from "./gh-link";
@@ -37,17 +37,20 @@ if (progress === 1) {
 }
 `.trim();
 
+const SCROLL_SIZE = 480;
+const STYLES = { "--tile-size": `${SCROLL_SIZE}px` } as React.CSSProperties;
+
 function App() {
   const [top, setTop] = useState(0);
   const ref = useRef<HTMLUListElement>(null);
 
   const handleDown = useCallback(
-    () => setTop((state) => Math.min(450 * 3, state + 450)),
+    () => setTop((state) => Math.min(SCROLL_SIZE * 3, state + SCROLL_SIZE)),
     [],
   );
 
   const handleUp = useCallback(
-    () => setTop((state) => Math.max(0, state - 450)),
+    () => setTop((state) => Math.max(0, state - SCROLL_SIZE)),
     [],
   );
 
@@ -74,7 +77,7 @@ function App() {
   }, [top]);
 
   return (
-    <div className="app">
+    <div className="app" style={STYLES}>
       <GhLink
         href="https://github.com/faustienf/easing-scroll"
         target="_blank"
@@ -105,14 +108,14 @@ function App() {
 
         <div className="code-card">
           <SandpackProvider
-            style={{ height: 450 }}
-            theme={amethyst}
+            style={{ height: SCROLL_SIZE }}
+            theme={aquaBlue}
             template="react"
             files={{
               "/App.js": code,
             }}
           >
-            <SandpackLayout style={{ height: "100%", padding: 8 }}>
+            <SandpackLayout style={{ height: "100%" }}>
               <SandpackCodeEditor style={{ height: "100%" }} readOnly />
             </SandpackLayout>
           </SandpackProvider>

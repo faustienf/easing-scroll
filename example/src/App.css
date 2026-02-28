@@ -50,8 +50,8 @@
   border-radius: 20px;
   list-style: none;
   overflow: hidden;
-  width: 450px;
-  height: 450px;
+  width: var(--tile-size);
+  height: var(--tile-size);
   display: grid;
   grid-template-columns: 1fr;
   grid-template-rows: repeat(4, 100%);
