@@ -7,7 +7,7 @@
 
 Programmatic smooth scrolling with custom easing, abort support, and promise-based completion tracking.
 
-[Demo](https://easing-scroll.vercel.app)
+[Demo](https://easing-scroll-liard.vercel.app)
 
 ## Highlights
 
