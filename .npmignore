@@ -1,7 +1,0 @@
-.vercel/
-example/
-assets/
-test/
-pnpm-lock.yaml
-rollup.config.js
-tsconfig.json

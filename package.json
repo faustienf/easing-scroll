@@ -3,22 +3,25 @@
   "version": "1.0.3",
   "description": "♿️ Smooth scrolling",
   "type": "module",
-  "source": "src/easing-scroll.ts",
-  "main": "dist/easing-scroll.js",
-  "module": "dist/easing-scroll.mjs",
   "types": "dist/easing-scroll.d.ts",
   "exports": {
     ".": {
-      "require": "./dist/easing-scroll.js",
-      "import": "./dist/easing-scroll.mjs",
-      "default": "./dist/easing-scroll.mjs"
+      "types": "./dist/easing-scroll.d.ts",
+      "require": {
+        "types": "./dist/easing-scroll.d.cts",
+        "default": "./dist/easing-scroll.cjs"
+      },
+      "import": "./dist/easing-scroll.js"
     }
   },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
   "scripts": {
     "test": "vitest run",
     "check-types": "tsc",
-    "clean": "rm -rf dist",
-    "build": "npm run clean && rollup -c",
+    "build": "tsup src/easing-scroll.ts --format cjs,esm --dts --minify --clean",
     "release:patch": "npm version patch",
     "preversion": "npm run check-types && npm run build",
     "postversion": "git add . && git push && git push --tags && npm publish",
@@ -40,15 +43,12 @@
     "url": "https://github.com/faustienf/easing-scroll/issues"
   },
   "homepage": "https://github.com/faustienf/easing-scroll#readme",
-  "prettier": {},
   "devDependencies": {
     "@vitest/coverage-v8": "^4.0.18",
     "esbuild": "^0.27.3",
     "husky": "^9.1.7",
     "jsdom": "^28.1.0",
-    "rollup": "^4.59.0",
-    "rollup-plugin-esbuild": "^6.2.1",
-    "rollup-plugin-typescript2": "^0.36.0",
+    "tsup": "^8.5.1",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18"
   }
