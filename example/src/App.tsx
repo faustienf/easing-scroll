@@ -43,12 +43,12 @@ function App() {
 
   const handleDown = useCallback(
     () => setTop((state) => Math.min(430 * 3, state + 430)),
-    []
+    [],
   );
 
   const handleUp = useCallback(
     () => setTop((state) => Math.max(0, state - 430)),
-    []
+    [],
   );
 
   useEffect(() => {
