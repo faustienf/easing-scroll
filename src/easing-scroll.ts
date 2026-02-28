@@ -95,19 +95,26 @@ export const easingScroll = <E extends Element>(
     return Promise.resolve(1);
   }
 
+  const startTop = target.scrollTop;
+  const startLeft = target.scrollLeft;
+
+  // Clamp target values to the browser's valid scroll range by
+  // temporarily applying them and reading back the clamped result.
+  // Then immediately restore the original position to avoid a visual flash.
+  scrollTo(target, top, left);
+  top = target.scrollTop;
+  left = target.scrollLeft;
+  target.scrollTop = startTop;
+  target.scrollLeft = startLeft;
+
+  // Already at the target position — nothing to animate
+  const sameTop = top === undefined || Math.abs(top - startTop) < 1;
+  const sameLeft = left === undefined || Math.abs(left - startLeft) < 1;
+  if (sameTop && sameLeft) {
+    return Promise.resolve(1);
+  }
+
   return new Promise<Pct>((resolve) => {
-    const startTop = target.scrollTop;
-    const startLeft = target.scrollLeft;
-
-    // Clamp target values to the browser's valid scroll range by
-    // temporarily applying them and reading back the clamped result.
-    // Then immediately restore the original position to avoid a visual flash.
-    scrollTo(target, top, left);
-    top = target.scrollTop;
-    left = target.scrollLeft;
-    target.scrollTop = startTop;
-    target.scrollLeft = startLeft;
-
     let startTimestamp: Ms | undefined;
     let ramID: number;
 

@@ -101,6 +101,82 @@ describe("easingScroll", () => {
     expect(el.scrollTop).toBe(300);
   });
 
+  it("resolves 1 immediately when already at target position", async () => {
+    const el = createMockElement();
+    el.scrollTop = 200;
+    el.scrollLeft = 100;
+
+    const rafSpy = vi.spyOn(globalThis, "requestAnimationFrame");
+
+    const result = await easingScroll(el, {
+      top: 200,
+      left: 100,
+      duration: 300,
+    });
+
+    expect(result).toBe(1);
+    expect(el.scrollTop).toBe(200);
+    expect(el.scrollLeft).toBe(100);
+    // No animation frame should have been requested
+    expect(rafSpy).not.toHaveBeenCalled();
+    rafSpy.mockRestore();
+  });
+
+  it("resolves 1 immediately when target is clamped to current position", async () => {
+    const el = createMockElement({
+      scrollHeight: 1000,
+      clientHeight: 500,
+    });
+    // Already at max scroll
+    el.scrollTop = 500;
+
+    const rafSpy = vi.spyOn(globalThis, "requestAnimationFrame");
+
+    // Request beyond max — clamps to 500, which is where we already are
+    const result = await easingScroll(el, { top: 9999, duration: 300 });
+
+    expect(result).toBe(1);
+    expect(el.scrollTop).toBe(500);
+    expect(rafSpy).not.toHaveBeenCalled();
+    rafSpy.mockRestore();
+  });
+
+  it("resolves 1 immediately when difference is sub-pixel (<1px)", async () => {
+    const el = createMockElement();
+    el.scrollTop = 200;
+    el.scrollLeft = 100;
+
+    // Override setters to allow fractional values without clamping to int
+    let _st = 200;
+    let _sl = 100;
+    Object.defineProperty(el, "scrollTop", {
+      get: () => _st,
+      set: (v: number) => {
+        _st = Math.max(0, Math.min(v, 1500));
+      },
+      configurable: true,
+    });
+    Object.defineProperty(el, "scrollLeft", {
+      get: () => _sl,
+      set: (v: number) => {
+        _sl = Math.max(0, Math.min(v, 1500));
+      },
+      configurable: true,
+    });
+
+    const rafSpy = vi.spyOn(globalThis, "requestAnimationFrame");
+
+    const result = await easingScroll(el, {
+      top: 200.5,
+      left: 100.3,
+      duration: 300,
+    });
+
+    expect(result).toBe(1);
+    expect(rafSpy).not.toHaveBeenCalled();
+    rafSpy.mockRestore();
+  });
+
   // ─── Animated scroll ──────────────────────────────────────────
 
   it("animates scroll to target and resolves 1", async () => {
