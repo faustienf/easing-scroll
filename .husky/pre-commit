@@ -1,7 +1,8 @@
 pnpm run check-types
 pnpm test
 
-# The example consumes the built package through the workspace link, so dist/
-# has to exist before its type check can resolve `easing-scroll`.
+# Also validates the publishable package — the build runs publint and
+# are-the-types-wrong.
 pnpm run build
+
 pnpm --filter example run check-types

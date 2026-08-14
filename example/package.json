@@ -4,9 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "check-types": "tsc -b",
-    "build": "tsc -b && vite build",
+    "dev": "pnpm --filter easing-scroll run build && vite",
+    "check-types": "pnpm --filter easing-scroll run build && tsc -b",
+    "build": "pnpm --filter easing-scroll run build && tsc -b && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
