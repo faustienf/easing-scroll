@@ -53,7 +53,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The repository is a pnpm workspace. `example` is a member and depends on
   `easing-scroll` via `workspace:*`, so the demo consumes the built package
   instead of aliasing the library source — the same resolution a published
-  consumer gets. Run the root `build` before type-checking or running it.
+  consumer gets. Its `dev`, `build` and `check-types` scripts build the library
+  first, so a fresh clone works without a manual step.
 - The `pre-commit` hook now runs the test suite, and its `example` type check
   uses `tsc -b`; plain `tsc` matched zero files on a solution-style tsconfig, so
   that step had never checked anything.
