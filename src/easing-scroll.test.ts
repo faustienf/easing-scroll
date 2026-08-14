@@ -1,51 +1,139 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import {
+  describe,
+  it,
+  expect,
+  vi,
+  beforeEach,
+  afterEach,
+  onTestFinished,
+} from "vitest";
 import { easingScroll } from "./easing-scroll";
 
-/**
- * Create a mock scrollable element with configurable scroll dimensions.
- */
-const createMockElement = (opts?: {
+const clamp = (value: number, min: number, max: number) =>
+  Math.min(max, Math.max(min, value));
+
+type ScrollBox = {
   scrollHeight?: number;
   scrollWidth?: number;
   clientHeight?: number;
   clientWidth?: number;
-}) => {
-  const el = document.createElement("div");
+  /**
+   * `rtl` flips the horizontal range to `[-max, 0]`, matching how current
+   * browsers report `scrollLeft` in RTL containers.
+   */
+  direction?: "ltr" | "rtl";
+};
 
-  const scrollHeight = opts?.scrollHeight ?? 2000;
-  const scrollWidth = opts?.scrollWidth ?? 2000;
-  const clientHeight = opts?.clientHeight ?? 500;
-  const clientWidth = opts?.clientWidth ?? 500;
+/**
+ * Make an element behave like a scrollable box: fixed dimensions, and
+ * `scrollTop`/`scrollLeft` clamped to the valid range the way a browser does.
+ *
+ * jsdom performs no layout, so every scroll test needs this. The original
+ * property descriptors are restored when the test ends, which matters for nodes
+ * shared between tests such as `document.documentElement`.
+ */
+const makeScrollable = <T extends Element>(el: T, box: ScrollBox = {}): T => {
+  const {
+    scrollHeight = 2000,
+    scrollWidth = 2000,
+    clientHeight = 500,
+    clientWidth = 500,
+    direction = "ltr",
+  } = box;
 
-  Object.defineProperties(el, {
-    scrollHeight: { get: () => scrollHeight, configurable: true },
-    scrollWidth: { get: () => scrollWidth, configurable: true },
-    clientHeight: { get: () => clientHeight, configurable: true },
-    clientWidth: { get: () => clientWidth, configurable: true },
+  const maxTop = Math.max(0, scrollHeight - clientHeight);
+  const maxLeft = Math.max(0, scrollWidth - clientWidth);
+  const leftRange: [min: number, max: number] =
+    direction === "rtl" ? [-maxLeft, 0] : [0, maxLeft];
+
+  let top = 0;
+  let left = 0;
+
+  const originals = new Map<string, PropertyDescriptor | undefined>();
+  const define = (key: string, descriptor: PropertyDescriptor) => {
+    originals.set(key, Object.getOwnPropertyDescriptor(el, key));
+    Object.defineProperty(el, key, { ...descriptor, configurable: true });
+  };
+
+  define("scrollHeight", { get: () => scrollHeight });
+  define("scrollWidth", { get: () => scrollWidth });
+  define("clientHeight", { get: () => clientHeight });
+  define("clientWidth", { get: () => clientWidth });
+  define("scrollTop", {
+    get: () => top,
+    set: (value: number) => {
+      top = clamp(value, 0, maxTop);
+    },
+  });
+  define("scrollLeft", {
+    get: () => left,
+    set: (value: number) => {
+      left = clamp(value, ...leftRange);
+    },
   });
 
-  // Clamp scrollTop/scrollLeft to valid range
-  let _scrollTop = 0;
-  let _scrollLeft = 0;
-
-  Object.defineProperty(el, "scrollTop", {
-    get: () => _scrollTop,
-    set: (v: number) => {
-      _scrollTop = Math.max(0, Math.min(v, scrollHeight - clientHeight));
-    },
-    configurable: true,
-  });
-
-  Object.defineProperty(el, "scrollLeft", {
-    get: () => _scrollLeft,
-    set: (v: number) => {
-      _scrollLeft = Math.max(0, Math.min(v, scrollWidth - clientWidth));
-    },
-    configurable: true,
+  onTestFinished(() => {
+    for (const [key, descriptor] of originals) {
+      if (descriptor) Object.defineProperty(el, key, descriptor);
+      else Reflect.deleteProperty(el, key);
+    }
   });
 
   return el;
+};
+
+/** A throwaway scrollable element. */
+const createMockElement = (box?: ScrollBox) =>
+  makeScrollable(document.createElement("div"), box);
+
+/** An iframe window — a different realm from the test's own `window`. */
+const createFrameWindow = (): Window => {
+  const iframe = document.createElement("iframe");
+  document.body.appendChild(iframe);
+  onTestFinished(() => iframe.remove());
+  return iframe.contentWindow!;
+};
+
+/** The element that carries a window's scroll position. */
+const scrollerOf = (win: Window): Element =>
+  win.document.scrollingElement ?? win.document.documentElement;
+
+/** Run queued animation frames for `ms` of fake time, then flush microtasks. */
+const runFrames = async (ms: number) => {
+  vi.advanceTimersByTime(ms);
+  await vi.advanceTimersByTimeAsync(0);
+};
+
+/** Spy on `requestAnimationFrame`, restored when the test ends. */
+const spyOnFrames = () => {
+  const spy = vi.spyOn(globalThis, "requestAnimationFrame");
+  onTestFinished(() => spy.mockRestore());
+  return spy;
+};
+
+/**
+ * Record every value written to a scroll axis, in order. Wraps the accessor
+ * installed by `makeScrollable`, so clamping still applies.
+ */
+const trackWrites = (el: Element, axis: "scrollTop" | "scrollLeft") => {
+  const writes: number[] = [];
+  const { get, set } = Object.getOwnPropertyDescriptor(el, axis)!;
+
+  Object.defineProperty(el, axis, {
+    get,
+    set(value: number) {
+      set!.call(el, value);
+      writes.push(get!.call(el) as number);
+    },
+    configurable: true,
+  });
+
+  return writes;
+};
+
+const throwingEasing = () => {
+  throw new Error("boom from easing");
 };
 
 describe("easingScroll", () => {
@@ -57,290 +145,468 @@ describe("easingScroll", () => {
     vi.useRealTimers();
   });
 
-  // ─── Immediate / edge cases ───────────────────────────────────
+  describe("instant scroll", () => {
+    it("when duration is 0", async () => {
+      const el = createMockElement();
 
-  it("resolves 0 if signal is already aborted", async () => {
-    const el = createMockElement();
-    const controller = new AbortController();
-    controller.abort();
-
-    const result = await easingScroll(el, {
-      top: 100,
-      duration: 300,
-      signal: controller.signal,
+      expect(await easingScroll(el, { top: 200, duration: 0 })).toBe(1);
+      expect(el.scrollTop).toBe(200);
     });
 
-    expect(result).toBe(0);
-    expect(el.scrollTop).toBe(0);
-  });
+    it("when duration is negative", async () => {
+      const el = createMockElement();
 
-  it("resolves 1 immediately when top and left are both undefined", async () => {
-    const el = createMockElement();
-    const result = await easingScroll(el, { duration: 300 });
-    expect(result).toBe(1);
-  });
-
-  it("scrolls instantly and resolves 1 when duration is 0", async () => {
-    const el = createMockElement();
-    const result = await easingScroll(el, { top: 200, duration: 0 });
-    expect(result).toBe(1);
-    expect(el.scrollTop).toBe(200);
-  });
-
-  it("scrolls instantly and resolves 1 when duration is negative", async () => {
-    const el = createMockElement();
-    const result = await easingScroll(el, { top: 200, duration: -100 });
-    expect(result).toBe(1);
-    expect(el.scrollTop).toBe(200);
-  });
-
-  it("scrolls instantly when no duration option provided (defaults to 0)", async () => {
-    const el = createMockElement();
-    const result = await easingScroll(el, { top: 300 });
-    expect(result).toBe(1);
-    expect(el.scrollTop).toBe(300);
-  });
-
-  it("resolves 1 immediately when already at target position", async () => {
-    const el = createMockElement();
-    el.scrollTop = 200;
-    el.scrollLeft = 100;
-
-    const rafSpy = vi.spyOn(globalThis, "requestAnimationFrame");
-
-    const result = await easingScroll(el, {
-      top: 200,
-      left: 100,
-      duration: 300,
+      expect(await easingScroll(el, { top: 200, duration: -100 })).toBe(1);
+      expect(el.scrollTop).toBe(200);
     });
 
-    expect(result).toBe(1);
-    expect(el.scrollTop).toBe(200);
-    expect(el.scrollLeft).toBe(100);
-    // No animation frame should have been requested
-    expect(rafSpy).not.toHaveBeenCalled();
-    rafSpy.mockRestore();
+    it("when duration is omitted", async () => {
+      const el = createMockElement();
+
+      expect(await easingScroll(el, { top: 300 })).toBe(1);
+      expect(el.scrollTop).toBe(300);
+    });
+
+    it("when duration is NaN", async () => {
+      const el = createMockElement();
+      const frames = spyOnFrames();
+
+      expect(await easingScroll(el, { top: 200, duration: NaN })).toBe(1);
+      expect(el.scrollTop).toBe(200);
+      expect(frames).not.toHaveBeenCalled();
+    });
+
+    it("when duration is Infinity", async () => {
+      const el = createMockElement();
+      const frames = spyOnFrames();
+
+      // Animating would never reach progress 1 and would loop frames forever
+      expect(await easingScroll(el, { top: 200, duration: Infinity })).toBe(1);
+      expect(el.scrollTop).toBe(200);
+      expect(frames).not.toHaveBeenCalled();
+    });
+
+    it("treats left: 0 as a target, not as omitted", async () => {
+      const el = createMockElement();
+      el.scrollLeft = 400;
+
+      expect(await easingScroll(el, { left: 0 })).toBe(1);
+      expect(el.scrollLeft).toBe(0);
+    });
   });
 
-  it("resolves 1 immediately when target is clamped to current position", async () => {
-    const el = createMockElement({
-      scrollHeight: 1000,
-      clientHeight: 500,
+  describe("no-op", () => {
+    it("resolves 1 when top and left are both undefined", async () => {
+      const el = createMockElement();
+
+      expect(await easingScroll(el, { duration: 300 })).toBe(1);
     });
-    // Already at max scroll
-    el.scrollTop = 500;
 
-    const rafSpy = vi.spyOn(globalThis, "requestAnimationFrame");
+    it("resolves 1 without a frame when already at the target", async () => {
+      const el = createMockElement();
+      el.scrollTop = 200;
+      el.scrollLeft = 100;
+      const frames = spyOnFrames();
 
-    // Request beyond max — clamps to 500, which is where we already are
-    const result = await easingScroll(el, { top: 9999, duration: 300 });
+      const result = await easingScroll(el, {
+        top: 200,
+        left: 100,
+        duration: 300,
+      });
 
-    expect(result).toBe(1);
-    expect(el.scrollTop).toBe(500);
-    expect(rafSpy).not.toHaveBeenCalled();
-    rafSpy.mockRestore();
+      expect(result).toBe(1);
+      expect(frames).not.toHaveBeenCalled();
+    });
+
+    it("resolves 1 without a frame when the target clamps to the current position", async () => {
+      const el = createMockElement({ scrollHeight: 1000, clientHeight: 500 });
+      el.scrollTop = 500; // already at max
+      const frames = spyOnFrames();
+
+      expect(await easingScroll(el, { top: 9999, duration: 300 })).toBe(1);
+      expect(el.scrollTop).toBe(500);
+      expect(frames).not.toHaveBeenCalled();
+    });
+
+    it("resolves 1 without a frame when the difference is sub-pixel", async () => {
+      const el = createMockElement();
+      el.scrollTop = 200;
+      el.scrollLeft = 100;
+      const frames = spyOnFrames();
+
+      const result = await easingScroll(el, {
+        top: 200.5,
+        left: 100.3,
+        duration: 300,
+      });
+
+      expect(result).toBe(1);
+      expect(frames).not.toHaveBeenCalled();
+    });
   });
 
-  it("resolves 1 immediately when difference is sub-pixel (<1px)", async () => {
-    const el = createMockElement();
-    el.scrollTop = 200;
-    el.scrollLeft = 100;
+  describe("animation", () => {
+    it("animates vertical scroll to the target", async () => {
+      const el = createMockElement();
 
-    // Override setters to allow fractional values without clamping to int
-    let _st = 200;
-    let _sl = 100;
-    Object.defineProperty(el, "scrollTop", {
-      get: () => _st,
-      set: (v: number) => {
-        _st = Math.max(0, Math.min(v, 1500));
-      },
-      configurable: true,
-    });
-    Object.defineProperty(el, "scrollLeft", {
-      get: () => _sl,
-      set: (v: number) => {
-        _sl = Math.max(0, Math.min(v, 1500));
-      },
-      configurable: true,
+      const promise = easingScroll(el, { top: 400, duration: 100 });
+      await runFrames(150);
+
+      expect(await promise).toBe(1);
+      expect(el.scrollTop).toBe(400);
     });
 
-    const rafSpy = vi.spyOn(globalThis, "requestAnimationFrame");
+    it("animates horizontal scroll to the target", async () => {
+      const el = createMockElement();
 
-    const result = await easingScroll(el, {
-      top: 200.5,
-      left: 100.3,
-      duration: 300,
+      const promise = easingScroll(el, { left: 300, duration: 100 });
+      await runFrames(150);
+
+      expect(await promise).toBe(1);
+      expect(el.scrollLeft).toBe(300);
     });
 
-    expect(result).toBe(1);
-    expect(rafSpy).not.toHaveBeenCalled();
-    rafSpy.mockRestore();
+    it("animates both axes simultaneously", async () => {
+      const el = createMockElement();
+
+      const promise = easingScroll(el, { top: 200, left: 300, duration: 100 });
+      await runFrames(150);
+
+      expect(await promise).toBe(1);
+      expect(el.scrollTop).toBe(200);
+      expect(el.scrollLeft).toBe(300);
+    });
+
+    it("moves through intermediate positions instead of jumping", async () => {
+      const el = createMockElement();
+
+      const promise = easingScroll(el, { top: 400, duration: 100 });
+
+      await runFrames(50);
+      expect(el.scrollTop).toBeGreaterThan(0);
+      expect(el.scrollTop).toBeLessThan(400);
+
+      await runFrames(100);
+      expect(await promise).toBe(1);
+      expect(el.scrollTop).toBe(400);
+    });
+
+    it("treats top: 0 as a target, not as omitted", async () => {
+      const el = createMockElement();
+      el.scrollTop = 500;
+
+      const promise = easingScroll(el, { top: 0, duration: 100 });
+      await runFrames(150);
+
+      expect(await promise).toBe(1);
+      expect(el.scrollTop).toBe(0);
+    });
   });
 
-  // ─── Animated scroll ──────────────────────────────────────────
+  describe("axis independence", () => {
+    it("leaves the vertical position untouched when only left is animated", async () => {
+      const el = createMockElement();
+      el.scrollTop = 250;
 
-  it("animates scroll to target and resolves 1", async () => {
-    const el = createMockElement();
+      const promise = easingScroll(el, { left: 300, duration: 100 });
+      await runFrames(20);
 
-    const promise = easingScroll(el, { top: 400, duration: 100 });
+      // Something else scrolls vertically while the animation runs
+      el.scrollTop = 120;
+      await runFrames(150);
 
-    // Advance past the duration
-    vi.advanceTimersByTime(150);
-    // Flush microtasks / rAF
-    await vi.advanceTimersByTimeAsync(0);
+      expect(await promise).toBe(1);
+      expect(el.scrollLeft).toBe(300);
+      expect(el.scrollTop).toBe(120);
+    });
 
-    const result = await promise;
-    expect(result).toBe(1);
-    expect(el.scrollTop).toBe(400);
+    it("leaves the horizontal position untouched when only top is animated", async () => {
+      const el = createMockElement();
+      el.scrollLeft = 180;
+
+      const promise = easingScroll(el, { top: 400, duration: 100 });
+      await runFrames(150);
+
+      expect(await promise).toBe(1);
+      expect(el.scrollTop).toBe(400);
+      expect(el.scrollLeft).toBe(180);
+    });
   });
 
-  it("animates horizontal scroll", async () => {
-    const el = createMockElement();
+  describe("clamping", () => {
+    it("clamps the target to the max scrollable offset", async () => {
+      const el = createMockElement({ scrollHeight: 1000, clientHeight: 500 });
 
-    const promise = easingScroll(el, { left: 300, duration: 100 });
+      const promise = easingScroll(el, { top: 9999, duration: 100 });
+      await runFrames(150);
 
-    vi.advanceTimersByTime(150);
-    await vi.advanceTimersByTimeAsync(0);
+      expect(await promise).toBe(1);
+      expect(el.scrollTop).toBe(500);
+    });
 
-    const result = await promise;
-    expect(result).toBe(1);
-    expect(el.scrollLeft).toBe(300);
+    it("does not flash to the target position before animating", () => {
+      const el = createMockElement();
+      const writes = trackWrites(el, "scrollTop");
+
+      void easingScroll(el, { top: 400, duration: 300 });
+
+      // Clamping writes the target to read it back, then rolls it straight back
+      expect(writes).toEqual([400, 0]);
+      expect(el.scrollTop).toBe(0);
+    });
   });
 
-  it("animates both top and left simultaneously", async () => {
-    const el = createMockElement();
+  describe("RTL containers", () => {
+    it("animates to a negative left", async () => {
+      const el = createMockElement({ direction: "rtl" });
 
-    const promise = easingScroll(el, {
-      top: 200,
-      left: 300,
-      duration: 100,
+      const promise = easingScroll(el, { left: -300, duration: 100 });
+      await runFrames(150);
+
+      expect(await promise).toBe(1);
+      expect(el.scrollLeft).toBe(-300);
     });
 
-    vi.advanceTimersByTime(150);
-    await vi.advanceTimersByTimeAsync(0);
+    it("clamps a positive left to 0", async () => {
+      const el = createMockElement({ direction: "rtl" });
+      const frames = spyOnFrames();
 
-    const result = await promise;
-    expect(result).toBe(1);
-    expect(el.scrollTop).toBe(200);
-    expect(el.scrollLeft).toBe(300);
+      // Out of range in RTL, so it clamps to the resting position we are at
+      expect(await easingScroll(el, { left: 300, duration: 100 })).toBe(1);
+      expect(el.scrollLeft).toBe(0);
+      expect(frames).not.toHaveBeenCalled();
+    });
   });
 
-  // ─── Clamping ─────────────────────────────────────────────────
+  describe("window target", () => {
+    it("scrolls the document scrolling element", async () => {
+      const scroller = makeScrollable(scrollerOf(window));
 
-  it("clamps target to max scrollable area", async () => {
-    const el = createMockElement({
-      scrollHeight: 1000,
-      clientHeight: 500,
+      const promise = easingScroll(window, { top: 400, duration: 100 });
+      await runFrames(150);
+
+      expect(await promise).toBe(1);
+      expect(scroller.scrollTop).toBe(400);
     });
 
-    // Request scroll beyond max (1000 - 500 = 500)
-    const promise = easingScroll(el, { top: 9999, duration: 100 });
+    it("resolves a cross-realm window without relying on instanceof", async () => {
+      const frameWindow = createFrameWindow();
+      // A window from another realm is not `instanceof` this realm's Window
+      expect(frameWindow instanceof Window).toBe(false);
 
-    vi.advanceTimersByTime(150);
-    await vi.advanceTimersByTimeAsync(0);
+      const scroller = makeScrollable(scrollerOf(frameWindow));
 
-    const result = await promise;
-    expect(result).toBe(1);
-    expect(el.scrollTop).toBe(500); // clamped
+      const promise = easingScroll(frameWindow, { top: 300, duration: 100 });
+      await runFrames(150);
+
+      expect(await promise).toBe(1);
+      expect(scroller.scrollTop).toBe(300);
+    });
   });
 
-  it("does not flash to target position before animation starts", () => {
-    const el = createMockElement();
-    const positions: number[] = [];
+  describe("abort", () => {
+    it("resolves 0 when the signal is already aborted", async () => {
+      const el = createMockElement();
+      const controller = new AbortController();
+      controller.abort();
 
-    // Track scrollTop changes
-    let _st = 0;
-    Object.defineProperty(el, "scrollTop", {
-      get: () => _st,
-      set: (v: number) => {
-        _st = Math.max(0, Math.min(v, 1500));
-        positions.push(_st);
-      },
-      configurable: true,
+      const result = await easingScroll(el, {
+        top: 100,
+        duration: 300,
+        signal: controller.signal,
+      });
+
+      expect(result).toBe(0);
+      expect(el.scrollTop).toBe(0);
     });
 
-    Object.defineProperty(el, "scrollHeight", {
-      get: () => 2000,
-      configurable: true,
+    it("resolves 0 when aborted before the first frame", async () => {
+      const el = createMockElement();
+      const controller = new AbortController();
+
+      const promise = easingScroll(el, {
+        top: 400,
+        duration: 200,
+        signal: controller.signal,
+      });
+      controller.abort();
+
+      expect(await promise).toBe(0);
+      expect(el.scrollTop).toBe(0);
     });
-    Object.defineProperty(el, "clientHeight", {
-      get: () => 500,
-      configurable: true,
+
+    it("resolves with partial progress", async () => {
+      const el = createMockElement();
+      const controller = new AbortController();
+
+      const promise = easingScroll(el, {
+        top: 400,
+        duration: 200,
+        signal: controller.signal,
+      });
+
+      await runFrames(50);
+      controller.abort();
+      await runFrames(0);
+
+      const progress = await promise;
+      expect(progress).toBeGreaterThan(0);
+      expect(progress).toBeLessThan(0.5);
     });
 
-    easingScroll(el, { top: 400, duration: 300 });
+    it("never resolves with more than 1", async () => {
+      const el = createMockElement();
+      const controller = new AbortController();
 
-    // After calling easingScroll (before any rAF), scrollTop should be back to 0
-    // The clamping sets it to 400 then back to 0
-    expect(el.scrollTop).toBe(0);
+      const promise = easingScroll(el, {
+        top: 400,
+        duration: 50,
+        signal: controller.signal,
+      });
 
-    // The last position written should be 0 (the rollback)
-    expect(positions[positions.length - 1]).toBe(0);
+      // Well past the duration, so raw progress is far above 1
+      await runFrames(500);
+      controller.abort();
+      await runFrames(0);
+
+      expect(await promise).toBeLessThanOrEqual(1);
+    });
+
+    it("stops moving where the abort happened", async () => {
+      const el = createMockElement();
+      const controller = new AbortController();
+
+      const promise = easingScroll(el, {
+        top: 400,
+        duration: 200,
+        signal: controller.signal,
+      });
+
+      await runFrames(50);
+      controller.abort();
+      await runFrames(0);
+      await promise;
+
+      const stopped = el.scrollTop;
+      expect(stopped).toBeGreaterThan(0);
+      expect(stopped).toBeLessThan(400);
+
+      // The cancelled frame must not move it afterwards
+      await runFrames(300);
+      expect(el.scrollTop).toBe(stopped);
+    });
+
+    it("removes the listener once the animation completes", async () => {
+      const el = createMockElement();
+      const controller = new AbortController();
+      const removeListener = vi.spyOn(controller.signal, "removeEventListener");
+
+      const promise = easingScroll(el, {
+        top: 400,
+        duration: 100,
+        signal: controller.signal,
+      });
+      await runFrames(150);
+      await promise;
+
+      // A long-lived signal must not keep the animation closure alive
+      expect(removeListener).toHaveBeenCalledWith(
+        "abort",
+        expect.any(Function),
+      );
+    });
+
+    it("keeps the resolved value when aborted after completion", async () => {
+      const el = createMockElement();
+      const controller = new AbortController();
+
+      const promise = easingScroll(el, {
+        top: 400,
+        duration: 100,
+        signal: controller.signal,
+      });
+      await runFrames(150);
+      expect(await promise).toBe(1);
+
+      controller.abort();
+      await runFrames(0);
+
+      expect(await promise).toBe(1);
+      expect(el.scrollTop).toBe(400);
+    });
   });
 
-  // ─── Abort ────────────────────────────────────────────────────
+  describe("easing", () => {
+    it("uses the custom easing function", async () => {
+      const el = createMockElement();
+      const easing = vi.fn((t: number) => t * t); // easeInQuad
 
-  it("resolves with partial progress on abort", async () => {
-    const el = createMockElement();
-    const controller = new AbortController();
+      const promise = easingScroll(el, { top: 400, duration: 100, easing });
+      await runFrames(150);
 
-    const promise = easingScroll(el, {
-      top: 400,
-      duration: 200,
-      signal: controller.signal,
+      expect(await promise).toBe(1);
+      expect(easing).toHaveBeenCalled();
+      expect(el.scrollTop).toBe(400);
     });
 
-    // Let animation run partway
-    vi.advanceTimersByTime(50);
-    await vi.advanceTimersByTimeAsync(0);
+    it("is called once per frame, never outside 0–1", async () => {
+      const el = createMockElement();
+      const args: number[] = [];
 
-    controller.abort();
-    await vi.advanceTimersByTimeAsync(0);
+      // Both axes animate, so a per-axis call would show up as a duplicate
+      const promise = easingScroll(el, {
+        top: 400,
+        left: 300,
+        duration: 100,
+        easing: (t) => {
+          args.push(t);
+          return t;
+        },
+      });
+      await runFrames(150);
+      await promise;
 
-    const result = await promise;
-    expect(result).toBeGreaterThan(0);
-    expect(result).toBeLessThanOrEqual(1);
-  });
-
-  it("abort progress never exceeds 1", async () => {
-    const el = createMockElement();
-    const controller = new AbortController();
-
-    const promise = easingScroll(el, {
-      top: 400,
-      duration: 50,
-      signal: controller.signal,
+      expect(args.length).toBeGreaterThan(0);
+      expect(Math.min(...args)).toBeGreaterThanOrEqual(0);
+      expect(Math.max(...args)).toBeLessThanOrEqual(1);
+      expect(new Set(args).size).toBe(args.length);
     });
 
-    // Advance well past duration, then abort
-    vi.advanceTimersByTime(500);
-    await vi.advanceTimersByTimeAsync(0);
+    it("rejects when it throws", async () => {
+      const el = createMockElement();
 
-    controller.abort();
-    await vi.advanceTimersByTimeAsync(0);
+      const promise = easingScroll(el, {
+        top: 400,
+        duration: 100,
+        easing: throwingEasing,
+      });
+      // `rejects` attaches its handler now — attaching it after the frames run
+      // would leave the rejection briefly unhandled, which the runner reports
+      const rejected = expect(promise).rejects.toThrow("boom from easing");
 
-    const result = await promise;
-    expect(result).toBeLessThanOrEqual(1);
-  });
+      await runFrames(20);
 
-  // ─── Custom easing ────────────────────────────────────────────
-
-  it("uses custom easing function", async () => {
-    const el = createMockElement();
-    const easingFn = vi.fn((t: number) => t * t); // easeIn quadratic
-
-    const promise = easingScroll(el, {
-      top: 400,
-      duration: 100,
-      easing: easingFn,
+      // Unguarded, the throw would kill the frame callback and hang this promise
+      await rejected;
     });
 
-    vi.advanceTimersByTime(150);
-    await vi.advanceTimersByTimeAsync(0);
+    it("stops requesting frames after it throws", async () => {
+      const el = createMockElement();
 
-    const result = await promise;
-    expect(result).toBe(1);
-    expect(easingFn).toHaveBeenCalled();
-    expect(el.scrollTop).toBe(400);
+      const promise = easingScroll(el, {
+        top: 400,
+        duration: 100,
+        easing: throwingEasing,
+      });
+      const rejected = expect(promise).rejects.toThrow();
+
+      await runFrames(20);
+      await rejected;
+
+      const frames = spyOnFrames();
+      await runFrames(200);
+
+      expect(frames).not.toHaveBeenCalled();
+    });
   });
 });

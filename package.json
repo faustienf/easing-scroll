@@ -3,28 +3,41 @@
   "version": "1.0.5",
   "description": "♿️ Smooth scrolling",
   "type": "module",
-  "types": "dist/easing-scroll.d.ts",
+  "types": "./dist/easing-scroll.d.ts",
+  "main": "./dist/easing-scroll.cjs",
+  "module": "./dist/easing-scroll.js",
   "exports": {
     ".": {
-      "types": "./dist/easing-scroll.d.ts",
+      "import": {
+        "types": "./dist/easing-scroll.d.ts",
+        "default": "./dist/easing-scroll.js"
+      },
       "require": {
         "types": "./dist/easing-scroll.d.cts",
         "default": "./dist/easing-scroll.cjs"
       },
-      "import": "./dist/easing-scroll.js"
-    }
+      "default": "./dist/easing-scroll.js"
+    },
+    "./package.json": "./package.json"
   },
   "files": [
-    "dist"
+    "dist",
+    "CHANGELOG.md"
   ],
   "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "test": "vitest run",
     "check-types": "tsc",
-    "build": "tsup src/easing-scroll.ts --format cjs,esm --dts --minify --clean",
+    "build": "tsdown",
     "release:patch": "npm version patch",
-    "preversion": "npm run check-types && npm run build",
-    "postversion": "git add . && git push && git push --tags && npm publish",
+    "release:minor": "npm version minor",
+    "release:major": "npm version major",
+    "preversion": "npm run check-types && npm test && npm run build",
+    "prepack": "npm run build",
+    "postversion": "git push && git push --tags && npm publish",
     "prepare": "husky"
   },
   "repository": {
@@ -37,19 +50,22 @@
     "smooth-scroll",
     "easing"
   ],
-  "author": "@faustien",
+  "author": "@faustienf",
   "license": "MIT",
+  "packageManager": "pnpm@11.21.0",
   "bugs": {
     "url": "https://github.com/faustienf/easing-scroll/issues"
   },
   "homepage": "https://github.com/faustienf/easing-scroll#readme",
   "devDependencies": {
-    "@vitest/coverage-v8": "^4.0.18",
-    "esbuild": "^0.27.3",
+    "@arethetypeswrong/core": "^0.18.5",
+    "@vitest/coverage-v8": "^4.1.10",
+    "esbuild": "^0.28.2",
     "husky": "^9.1.7",
-    "jsdom": "^28.1.0",
-    "tsup": "^8.5.1",
-    "typescript": "^5.9.3",
-    "vitest": "^4.0.18"
+    "jsdom": "^30.0.1",
+    "publint": "^0.3.23",
+    "tsdown": "^0.22.14",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
   }
 }
