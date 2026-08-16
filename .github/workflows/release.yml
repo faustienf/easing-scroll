@@ -7,6 +7,10 @@ on:
   push:
     tags:
       - "v*"
+  # A manual run is always a rehearsal: same steps, but the publish is a dry run,
+  # so the pipeline can be checked without spending a version number. It does not
+  # exercise the OIDC exchange — `npm publish --dry-run` never calls the registry.
+  workflow_dispatch:
 
 jobs:
   publish:
@@ -37,6 +41,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Check that the tag matches package.json
+        if: github.event_name == 'push'
         run: |
           tag="${GITHUB_REF_NAME#v}"
           pkg="$(node -p "require('./package.json').version")"
@@ -53,4 +58,10 @@ jobs:
       # are-the-types-wrong. `npm publish` rebuilds via prepack.
       - run: pnpm run build
 
-      - run: npm publish
+      - name: Publish to npm
+        if: github.event_name == 'push'
+        run: npm publish
+
+      - name: Dry run — everything except the registry write
+        if: github.event_name == 'workflow_dispatch'
+        run: npm publish --dry-run
