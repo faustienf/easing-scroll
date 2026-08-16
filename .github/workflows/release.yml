@@ -31,11 +31,19 @@ jobs:
 
       - uses: pnpm/action-setup@v4
 
+      # Deliberately no `registry-url`: it makes setup-node write an .npmrc with
+      # `_authToken=${NODE_AUTH_TOKEN}` and export NODE_AUTH_TOKEN as the literal
+      # placeholder XXXXX-XXXXX-XXXXX-XXXXX. Publishing works either way — npm
+      # prefers the OIDC exchange whenever the package has a trusted publisher —
+      # but that placeholder is a credential to fall back on when the exchange
+      # does not happen, and the registry then answers 404, which reads as "no
+      # such package" rather than "not authenticated". Leaving it out means an
+      # auth problem can only surface as an auth problem. registry.npmjs.org is
+      # the default registry anyway.
       - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: pnpm
-          registry-url: https://registry.npmjs.org
 
       # Trusted Publishing needs npm >= 11.5.1, which is newer than the npm
       # bundled with Node 22.
