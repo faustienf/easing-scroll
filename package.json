@@ -1,6 +1,6 @@
 {
   "name": "easing-scroll",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "♿️ Smooth scrolling",
   "type": "module",
   "types": "./dist/easing-scroll.d.ts",
