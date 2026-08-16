@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+_Nothing yet._
+
+## 1.2.0 — 2026-08-14
+
 ### Added
 
 - `window` is accepted as a scroll target and resolves to
@@ -28,6 +32,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   never completes, leaving an unbounded `requestAnimationFrame` loop behind.
 - `duration: NaN` scrolls instantly. It previously slipped past the
   `duration <= 0` check.
+- `exports` resolved ESM type declarations for CJS consumers. The `types`
+  condition sat above `require`, so it matched first and the nested
+  `require.types` was never reached — `require("easing-scroll")` got
+  `.d.ts` (ESM) types for a `.cjs` implementation. Types are now declared inside
+  the `import` and `require` conditions instead.
 
 ### Changed
 
@@ -35,14 +44,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `<E extends ScrollTarget>` (`Element | Window`). Existing call sites keep
   compiling, including those that pass an explicit type argument such as
   `easingScroll<HTMLDivElement>(el, …)`.
-
-### Fixed
-
-- `exports` resolved ESM type declarations for CJS consumers. The `types`
-  condition sat above `require`, so it matched first and the nested
-  `require.types` was never reached — `require("easing-scroll")` got
-  `.d.ts` (ESM) types for a `.cjs` implementation. Types are now declared inside
-  the `import` and `require` conditions instead.
 
 ### Build
 
@@ -65,7 +66,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   a Caveats section for `scroll-behavior: smooth`, concurrent calls,
   `prefers-reduced-motion`, the extra `scroll` event, and overshoot easings.
 
-## 1.0.5
+## 1.1.0 — 2026-08-14
+
+Tagged but never published to npm: the publish failed on an expired token and the
+version was bumped instead of the publish being retried. Its changes are the ones
+listed under 1.2.0, which is identical in content.
+
+## 1.0.5 — 2026-02-28
 
 ### Fixed
 
