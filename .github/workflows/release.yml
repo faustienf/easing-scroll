@@ -7,9 +7,12 @@ on:
   push:
     tags:
       - "v*"
-  # A manual run is always a rehearsal: same steps, but the publish is a dry run,
-  # so the pipeline can be checked without spending a version number. It does not
-  # exercise the OIDC exchange — `npm publish --dry-run` never calls the registry.
+  # A manual run is always a rehearsal: same steps, but it stops at the assembled
+  # tarball, so the pipeline can be checked without spending a version number.
+  # It proves nothing about auth — the OIDC exchange only happens on a real
+  # publish. `npm publish --dry-run` is deliberately not used here: it queries the
+  # registry for existing versions, so it always fails on an already-published
+  # version, which is exactly the state a rehearsal runs in.
   workflow_dispatch:
 
 jobs:
@@ -62,6 +65,6 @@ jobs:
         if: github.event_name == 'push'
         run: npm publish
 
-      - name: Dry run — everything except the registry write
+      - name: Rehearsal — assemble the tarball, stop before publishing
         if: github.event_name == 'workflow_dispatch'
-        run: npm publish --dry-run
+        run: npm pack --dry-run
