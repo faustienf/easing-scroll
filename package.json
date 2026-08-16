@@ -30,6 +30,7 @@
   },
   "scripts": {
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "check-types": "tsc",
     "build": "tsdown",
     "release:patch": "npm version patch",

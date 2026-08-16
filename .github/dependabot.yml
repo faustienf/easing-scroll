@@ -1,0 +1,26 @@
+version: 2
+
+updates:
+  # Action majors go stale silently — nothing fails when actions/checkout@v5 is
+  # two majors behind, it just quietly runs on an older runner image.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "ci"
+
+  - package-ecosystem: npm
+    directories:
+      - /
+      - /example
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "chore"
+    # Everything here is a devDependency; the published package has no runtime
+    # dependencies. One grouped PR a month is enough.
+    groups:
+      dev-dependencies:
+        patterns:
+          - "*"

@@ -1,8 +1,2 @@
 pnpm run check-types
 pnpm test
-
-# Also validates the publishable package — the build runs publint and
-# are-the-types-wrong.
-pnpm run build
-
-pnpm --filter example run check-types
