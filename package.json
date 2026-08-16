@@ -37,7 +37,8 @@
     "release:major": "npm version major",
     "preversion": "npm run check-types && npm test && npm run build",
     "prepack": "npm run build",
-    "postversion": "git push && git push --tags && npm publish",
+    "prepublishOnly": "node -e \"if (!process.env.CI) { console.error('\\nRefusing to publish from a local machine. Publishing is done by .github/workflows/release.yml on tag push: run npm run release:patch|minor|major and let CI publish the tag.\\n'); process.exit(1) }\"",
+    "postversion": "git push --follow-tags",
     "prepare": "husky"
   },
   "repository": {
