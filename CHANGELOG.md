@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Nothing yet._
 
+## 1.2.1 — 2026-08-16
+
+Infrastructure only — the library itself is unchanged from 1.2.0.
+
+### Build
+
+- Publishing moved to GitHub Actions on tag push, authenticated with npm trusted
+  publishing over OIDC instead of a long-lived token, so releases now carry a
+  provenance statement. `npm version` no longer publishes from a developer
+  machine, and `prepublishOnly` refuses to.
+
 ## 1.2.0 — 2026-08-14
 
 ### Added
